@@ -183,3 +183,14 @@ function showAlert(message, type) {
         }
     }, 5000);
 }
+
+// Exportar funciones para pruebas unitarias
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        showSection,
+        displayPlanetas,
+        loadPlanetas,
+        deletePlaneta,
+        showAlert
+    };
+}
