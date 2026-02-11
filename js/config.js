@@ -14,7 +14,7 @@ function getUser() {
 
 function isAdmin() {
     const user = getUser();
-    return user && user.role === 'ADMIN';
+    return user && user.role === 'ADMIN' ? true : false;
 }
 
 function logout() {
@@ -51,4 +51,17 @@ async function fetchWithAuth(url, options = {}) {
     }
     
     return response;
+}
+
+// Exportar funciones para pruebas unitarias (Jest/Node.js)
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        getApiUrl,
+        getToken,
+        getUser,
+        isAdmin,
+        logout,
+        checkAuth,
+        fetchWithAuth
+    };
 }

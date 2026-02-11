@@ -1,0 +1,14 @@
+{
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "npx serve -s . -l $PORT",
+    "restartPolicyType": "ON_FAILURE"
+  }
+}
+```
+
+**3. `Procfile`** (opcional pero ayuda)
+```
+web: npx serve -s . -p $PORT
