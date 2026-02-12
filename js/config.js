@@ -1,6 +1,17 @@
-// Configuración global
+// js/config.js - Configuración global y Autenticación
+
 function getApiUrl() {
-    return localStorage.getItem('apiUrl') || 'http://localhost:8000';
+    // Si el usuario guardó una URL en el login (Configurar API URL), usamos esa.
+    const savedUrl = localStorage.getItem('apiUrl');
+    if (savedUrl) return savedUrl;
+
+    // Si estamos en localhost (desarrollo), usamos el puerto 8000 del contenedor Docker.
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:8000';
+    }
+
+    // Por defecto retornamos localhost, pero en Vercel se debe configurar manualmente en el login.
+    return 'http://localhost:8000';
 }
 
 function getToken() {
@@ -14,7 +25,7 @@ function getUser() {
 
 function isAdmin() {
     const user = getUser();
-    // Forzamos que siempre devuelva true o false (booleano)
+    // Uso de !! para asegurar que el resultado sea estrictamente true o false para los Tests.
     return !!(user && (user.role === 'ADMIN' || user.role === 'admin'));
 }
 
@@ -32,6 +43,7 @@ function checkAuth() {
 
 async function fetchWithAuth(url, options = {}) {
     const token = getToken();
+    
     const headers = {
         'Content-Type': 'application/json',
         ...(token && { 'Authorization': `Bearer ${token}` }),
@@ -39,18 +51,33 @@ async function fetchWithAuth(url, options = {}) {
     };
     
     try {
-        const response = await fetch(url, { ...options, headers });
+        const response = await fetch(url, {
+            ...options,
+            headers
+        });
+        
+        // Manejo de token expirado o inválido
         if (response.status === 401) {
             logout();
             return null;
         }
+        
         return response;
     } catch (error) {
-        console.error("Error en fetchWithAuth:", error);
-        throw error;
+        console.error("Error de red/conexión:", error);
+        throw error; // Permite que el catch del dashboard muestre "Error de conexión"
     }
 }
 
+// Exportación compatible con el Navegador y con JEST (Node.js)
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { getApiUrl, getToken, getUser, isAdmin, logout, checkAuth, fetchWithAuth };
+    module.exports = { 
+        getApiUrl, 
+        getToken, 
+        getUser, 
+        isAdmin, 
+        logout, 
+        checkAuth, 
+        fetchWithAuth 
+    };
 }
