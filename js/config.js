@@ -14,7 +14,8 @@ function getUser() {
 
 function isAdmin() {
     const user = getUser();
-    return user && user.role === 'ADMIN' ? true : false;
+    // Forzamos que siempre devuelva true o false (booleano)
+    return !!(user && (user.role === 'ADMIN' || user.role === 'admin'));
 }
 
 function logout() {
@@ -29,39 +30,27 @@ function checkAuth() {
     }
 }
 
-// Función para hacer peticiones autenticadas
 async function fetchWithAuth(url, options = {}) {
     const token = getToken();
-    
     const headers = {
         'Content-Type': 'application/json',
         ...(token && { 'Authorization': `Bearer ${token}` }),
         ...options.headers
     };
     
-    const response = await fetch(url, {
-        ...options,
-        headers
-    });
-    
-    // Si el token expiró
-    if (response.status === 401) {
-        logout();
-        return null;
+    try {
+        const response = await fetch(url, { ...options, headers });
+        if (response.status === 401) {
+            logout();
+            return null;
+        }
+        return response;
+    } catch (error) {
+        console.error("Error en fetchWithAuth:", error);
+        throw error;
     }
-    
-    return response;
 }
 
-// Exportar funciones para pruebas unitarias (Jest/Node.js)
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        getApiUrl,
-        getToken,
-        getUser,
-        isAdmin,
-        logout,
-        checkAuth,
-        fetchWithAuth
-    };
+    module.exports = { getApiUrl, getToken, getUser, isAdmin, logout, checkAuth, fetchWithAuth };
 }

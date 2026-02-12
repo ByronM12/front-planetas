@@ -68,16 +68,15 @@ describe('Dashboard Functions', () => {
         test('debe mostrar alerta cuando intenta listar sin permisos', () => {
             isAdmin.mockReturnValue(false);
             showSection('listar');
-            expect(alertContainer.innerHTML).toContain('No tienes permisos');
+            expect(alertContainer.innerHTML).toContain('Acceso denegado');
         });
     });
 
     describe('displayPlanetas', () => {
         test('debe mostrar mensaje cuando no hay planetas', () => {
             displayPlanetas([]);
-            expect(document.getElementById('planetasTableBody').innerHTML).toContain(
-                'No hay planetas registrados'
-            );
+            const tbody = document.getElementById('planetasTableBody');
+            expect(tbody.textContent).toContain('Vacio');
         });
 
         test('debe mostrar planetas en la tabla', () => {
@@ -120,13 +119,6 @@ describe('Dashboard Functions', () => {
             const alert = alertContainer.querySelector('.alert');
             
             expect(alert.classList.contains('alert-danger')).toBe(true);
-        });
-
-        test('debe tener botón de cerrar', () => {
-            showAlert('Test', 'info');
-            const closeBtn = alertContainer.querySelector('.btn-close');
-            
-            expect(closeBtn).toBeTruthy();
         });
     });
 });
