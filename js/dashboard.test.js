@@ -1,25 +1,40 @@
-// Mock de funciones de config.js
-const mockConfig = {
+// 1. Mockea el módulo `config.js` por completo. Jest reemplazará todas sus
+// funciones exportadas con funciones simuladas (mocks).
+jest.mock('./config.js', () => ({
     getApiUrl: jest.fn(() => 'http://localhost:8000'),
     getToken: jest.fn(() => 'test-token'),
-    getUser: jest.fn(() => ({ username: 'admin', role: 'ADMIN' })),
+    getUser: jest.fn(() => ({ username: 'test-user', role: 'USER' })),
     isAdmin: jest.fn(() => true),
-    fetchWithAuth: jest.fn()
-};
+    logout: jest.fn(),
+    checkAuth: jest.fn(), // Se mockea para evitar que se ejecute la redirección real
+    fetchWithAuth: jest.fn(),
+}));
 
-// Simular global
-global.getApiUrl = mockConfig.getApiUrl;
-global.getToken = mockConfig.getToken;
-global.getUser = mockConfig.getUser;
-global.isAdmin = mockConfig.isAdmin;
-global.fetchWithAuth = mockConfig.fetchWithAuth;
+// 2. Importa las funciones simuladas para poder controlarlas en los tests.
+const config = require('./config.js');
+const { isAdmin } = config;
+
+// Asigna los mocks al objeto global para que dashboard.js pueda encontrarlos
+Object.assign(global, config);
+
+// 3. Importa las funciones que quieres probar DESPUÉS de mockear las dependencias.
+// El código de alto nivel en `dashboard.js` se ejecutará usando los mocks.
+const { showSection, displayPlanetas, showAlert } = require('./dashboard.js');
 
 describe('Dashboard Functions', () => {
     let alertContainer, crearSection, listarSection;
 
     beforeEach(() => {
+        // Limpia los mocks antes de cada test para asegurar un estado limpio
+        jest.clearAllMocks();
+
         // Limpiar el DOM antes de cada test
         document.body.innerHTML = `
+            <nav>
+                <span id="userNameNav"></span>
+                <span id="userRoleBadge"></span>
+                <button id="btnListar"></button>
+            </nav>
             <div id="alertContainer"></div>
             <div id="crearSection" style="display: none;"></div>
             <div id="listarSection" style="display: none;"></div>
@@ -44,14 +59,14 @@ describe('Dashboard Functions', () => {
         });
 
         test('debe mostrar sección listar cuando se llama con "listar" y es Admin', () => {
-            mockConfig.isAdmin.mockReturnValue(true);
+            isAdmin.mockReturnValue(true);
             showSection('listar');
             expect(listarSection.style.display).toBe('block');
             expect(crearSection.style.display).toBe('none');
         });
 
         test('debe mostrar alerta cuando intenta listar sin permisos', () => {
-            mockConfig.isAdmin.mockReturnValue(false);
+            isAdmin.mockReturnValue(false);
             showSection('listar');
             expect(alertContainer.innerHTML).toContain('No tienes permisos');
         });
@@ -115,12 +130,3 @@ describe('Dashboard Functions', () => {
         });
     });
 });
-
-// Exportar funciones para las pruebas
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        showSection,
-        displayPlanetas,
-        showAlert
-    };
-}

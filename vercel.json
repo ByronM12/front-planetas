@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "name": "front-planetas",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "index.html",
+          "dashboard.html",
+          "js/**",
+          "css/**"
+        ]
+      }
+    }
+  ],
+  "routes": [{ "src": "/(.*)", "dest": "/" }]
+}

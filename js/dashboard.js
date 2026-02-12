@@ -1,7 +1,8 @@
 // Verificar autenticación
-checkAuth();
+function initializeDashboard() {
+    checkAuth();
 
-// Mostrar información del usuario
+    // Mostrar información del usuario
 const user = getUser();
 document.getElementById('userNameNav').textContent = user.username;
 document.getElementById('userRoleBadge').textContent = user.role;
@@ -12,6 +13,52 @@ if (!isAdmin()) {
     const btnListar = document.getElementById('btnListar');
     if (btnListar) {
         btnListar.style.display = 'none';
+    }
+}
+
+    // Crear planeta
+    const crearPlanetaForm = document.getElementById('crearPlanetaForm');
+    if (crearPlanetaForm) {
+        crearPlanetaForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const nombre = document.getElementById('nombre').value.trim();
+            const tipo = document.getElementById('tipo').value;
+            if (!nombre) {
+                showAlert('El nombre es obligatorio', 'warning');
+                return;
+            }
+            if (!tipo) {
+                showAlert('El tipo es obligatorio', 'warning');
+                return;
+            }
+            const planetaData = {
+                nombre: nombre,
+                tipo: tipo
+            };
+            try {
+                const response = await fetchWithAuth(`${getApiUrl()}/planetas/`, {
+                    method: 'POST',
+                    body: JSON.stringify(planetaData)
+                });
+                if (!response) return;
+                if (response.ok) {
+                    const data = await response.json();
+                    showAlert(`Planeta "${data.nombre}" creado exitosamente`, 'success');
+                    document.getElementById('crearPlanetaForm').reset();
+                } else if (response.status === 409) {
+                    const error = await response.json();
+                    showAlert('Ya existe un planeta con ese nombre', 'danger');
+                } else if (response.status === 400) {
+                    const error = await response.json();
+                    showAlert('Error en los datos enviados. Verifica los campos.', 'danger');
+                } else {
+                    showAlert('Error al crear el planeta', 'danger');
+                }
+            } catch (error) {
+                showAlert('Error de conexión con el servidor', 'danger');
+                console.error('Error:', error);
+            }
+        });
     }
 }
 
@@ -28,58 +75,8 @@ function showSection(section) {
             return;
         }
         document.getElementById('listarSection').style.display = 'block';
-        loadPlanetas();
     }
 }
-
-// Crear planeta
-document.getElementById('crearPlanetaForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const nombre = document.getElementById('nombre').value.trim();
-    const tipo = document.getElementById('tipo').value;
-    
-    if (!nombre) {
-        showAlert('El nombre es obligatorio', 'warning');
-        return;
-    }
-    
-    if (!tipo) {
-        showAlert('El tipo es obligatorio', 'warning');
-        return;
-    }
-    
-    const planetaData = {
-        nombre: nombre,
-        tipo: tipo
-    };
-    
-    try {
-        const response = await fetchWithAuth(`${getApiUrl()}/planetas/`, {
-            method: 'POST',
-            body: JSON.stringify(planetaData)
-        });
-        
-        if (!response) return;
-        
-        if (response.ok) {
-            const data = await response.json();
-            showAlert(`Planeta "${data.nombre}" creado exitosamente`, 'success');
-            document.getElementById('crearPlanetaForm').reset();
-        } else if (response.status === 409) {
-            const error = await response.json();
-            showAlert('Ya existe un planeta con ese nombre', 'danger');
-        } else if (response.status === 400) {
-            const error = await response.json();
-            showAlert('Error en los datos enviados. Verifica los campos.', 'danger');
-        } else {
-            showAlert('Error al crear el planeta', 'danger');
-        }
-    } catch (error) {
-        showAlert('Error de conexión con el servidor', 'danger');
-        console.error('Error:', error);
-    }
-});
 
 // Cargar planetas (solo ADMIN)
 async function loadPlanetas() {
@@ -193,4 +190,9 @@ if (typeof module !== 'undefined' && module.exports) {
         deletePlaneta,
         showAlert
     };
+}
+
+if (typeof process === 'undefined' || process.env.JEST_WORKER_ID === undefined) {
+    // Initialize the dashboard only when running in a browser (not in Jest)
+    initializeDashboard();
 }
